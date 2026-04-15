@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import "./globals.css";
 import { Tajawal } from "next/font/google";
 import Link from "next/link";

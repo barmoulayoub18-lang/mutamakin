@@ -20,26 +20,42 @@ export async function POST(req: Request) {
     const base64 = body.file;
 
     const matches = base64.match(/^data:(.+);base64,(.*)$/);
-    if (!matches) throw new Error("Invalid file");
+    if (!matches) {
+      return NextResponse.json(
+        { error: "Invalid file format" },
+        { status: 400 }
+      );
+    }
 
     const mime = matches[1];
     const buffer = Buffer.from(matches[2], "base64");
 
-    let ext = "file";
+    let ext = "bin";
 
     if (mime.includes("pdf")) ext = "pdf";
-    else if (mime.includes("image")) ext = "png";
-    else if (mime.includes("video")) ext = "mp4";
+    else if (mime.includes("image/jpeg")) ext = "jpg";
+    else if (mime.includes("image/png")) ext = "png";
+    else if (mime.includes("image/webp")) ext = "webp";
+    else if (mime.includes("video/mp4")) ext = "mp4";
+    else if (mime.includes("video/webm")) ext = "webm";
 
-    const fileName = `mutamakin/${Date.now()}.${ext}`;
+    const fileName = `mutamakin/${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(2, 8)}.${ext}`;
 
-    const { error } = await supabase.storage
+    const { error: uploadError } = await supabase.storage
       .from("files")
       .upload(fileName, buffer, {
         contentType: mime,
+        upsert: true,
       });
 
-    if (error) throw error;
+    if (uploadError) {
+      return NextResponse.json(
+        { error: uploadError.message },
+        { status: 500 }
+      );
+    }
 
     const { data } = supabase.storage
       .from("files")
@@ -58,13 +74,12 @@ export async function POST(req: Request) {
       url: finalUrl,
       original_url: publicUrl,
       type: mime,
+      path: fileName,
     });
 
-  } catch (error) {
-    console.error("UPLOAD ERROR:", error);
-
+  } catch (error: any) {
     return NextResponse.json(
-      { error: "Upload failed" },
+      { error: error?.message || "Upload failed" },
       { status: 500 }
     );
   }

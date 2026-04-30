@@ -67,3 +67,33 @@ export async function isAdmin() {
   const profile = await getProfile();
   return profile?.role === "admin";
 }
+
+export async function getCurrentUserId() {
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  return session?.user?.id || null;
+}
+
+export async function getUserReviews() {
+  const supabase = await createClient();
+
+  const {
+    data: { session },
+  } = await supabase.auth.getSession();
+
+  const user = session?.user;
+
+  if (!user) return [];
+
+  const { data } = await supabase
+    .from("reviews")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("created_at", { ascending: false });
+
+  return (data as unknown) as any[];
+}

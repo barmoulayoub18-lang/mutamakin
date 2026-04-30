@@ -11,12 +11,30 @@ import Link from "next/link";
 export default async function AdminPage() {
   const supabase = await createClient();
 
-  // 📊 STATS
-  const [users, media, exercises, meetings] = await Promise.all([
+  const [
+    users,
+    media,
+    exercises,
+    meetings,
+    specializations,
+    technicalSpecs,
+    fushaSpecs
+  ] = await Promise.all([
     supabase.from("profiles").select("*", { count: "exact", head: true }),
     supabase.from("media_resources").select("*", { count: "exact", head: true }),
     supabase.from("exercises").select("*", { count: "exact", head: true }),
     supabase.from("meetings").select("*", { count: "exact", head: true }),
+    supabase.from("specializations").select("*", { count: "exact", head: true }),
+
+    supabase
+      .from("specializations")
+      .select("id", { count: "exact", head: true })
+      .eq("categories.slug", "technical"),
+
+    supabase
+      .from("specializations")
+      .select("id", { count: "exact", head: true })
+      .eq("categories.slug", "fusha"),
   ]);
 
   return (
@@ -24,7 +42,6 @@ export default async function AdminPage() {
 
       <div className="max-w-6xl mx-auto px-6 py-10 space-y-10">
 
-        {/* ================= HEADER ================= */}
         <div>
           <h1 className="text-2xl font-bold">
             لوحة التحكم
@@ -35,17 +52,23 @@ export default async function AdminPage() {
           </p>
         </div>
 
-        {/* ================= STATS ================= */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-5">
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-5">
 
           <Stat title="المستخدمين" value={users.count || 0} icon={<Users size={18} />} />
           <Stat title="المحتوى" value={media.count || 0} icon={<Video size={18} />} />
           <Stat title="التمارين" value={exercises.count || 0} icon={<Brain size={18} />} />
           <Stat title="الاجتماعات" value={meetings.count || 0} icon={<BookOpen size={18} />} />
+          <Stat title="التخصصات" value={specializations.count || 0} icon={<BookOpen size={18} />} />
 
         </div>
 
-        {/* ================= MANAGEMENT ================= */}
+        <div className="grid grid-cols-2 md:grid-cols-2 gap-5">
+
+          <Stat title="تخصصات تقنية" value={technicalSpecs.count || 0} icon={<BookOpen size={18} />} />
+          <Stat title="تخصصات فصيحة" value={fushaSpecs.count || 0} icon={<BookOpen size={18} />} />
+
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
           <AdminCard
@@ -72,9 +95,14 @@ export default async function AdminPage() {
             href="/Admin/meetings"
           />
 
+          <AdminCard
+            title="إدارة التخصصات"
+            desc="إضافة وتعديل تخصصات اللغات"
+            href="/Admin/specializations"
+          />
+
         </div>
 
-        {/* ================= BACK ================= */}
         <div className="pt-6">
           <Link
             href="/"
@@ -90,7 +118,6 @@ export default async function AdminPage() {
   );
 }
 
-/* ================= STAT ================= */
 function Stat({
   title,
   value,
@@ -119,7 +146,6 @@ function Stat({
   );
 }
 
-/* ================= CARD ================= */
 function AdminCard({
   title,
   desc,

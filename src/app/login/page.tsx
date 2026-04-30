@@ -16,7 +16,7 @@ export default function LoginPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
-  const next = searchParams.get("next") || "/dashboard";
+  const next = searchParams.get("next") || "/";
 
   const supabase = createClient();
 
@@ -42,6 +42,8 @@ export default function LoginPage() {
       return;
     }
 
+    await supabase.auth.getSession();
+
     router.refresh();
     router.push(next);
   }
@@ -50,7 +52,6 @@ export default function LoginPage() {
     <div className="min-h-screen bg-white flex items-center justify-center px-6">
       <div className="w-full max-w-md border border-slate-100 rounded-xl p-8 space-y-6">
 
-        {/* TITLE */}
         <div className="text-center">
           <h1 className="text-2xl font-bold">تسجيل الدخول</h1>
           <p className="text-sm text-slate-500 mt-2">
@@ -58,14 +59,12 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* ERROR */}
         {error && (
           <div className="text-sm text-red-500 text-center">
             {error}
           </div>
         )}
 
-        {/* FORM */}
         <form onSubmit={handleLogin} className="space-y-4">
 
           <div className="relative">
@@ -109,7 +108,6 @@ export default function LoginPage() {
 
         </form>
 
-        {/* REGISTER */}
         <p className="text-xs text-center text-slate-400">
           ليس لديك حساب؟{" "}
           <Link href="/register" className="text-sky-600">

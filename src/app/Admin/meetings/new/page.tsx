@@ -1,179 +1,152 @@
-"use server";
+"use client";
 
-import { createClient } from "@/utils/supabase/server";
-import { revalidatePath } from "next/cache";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 
-export async function getResources(params?: {
-  language?: string;
-  type?: string;
-}) {
-  const supabase = await createClient();
+export default function NewMeetingPage() {
+  const router = useRouter();
+  const supabase = createClient();
 
-  const { data, error } = await supabase
-    .from("media_resources")
-    .select(`
-      *,
-      modules (
-        id,
-        categories (
-          slug,
-          name
-        )
-      )
-    `)
-    .order("created_at", { ascending: false });
+  const [loading, setLoading] = useState(false);
+  const [language, setLanguage] = useState("");
+  const [moduleId, setModuleId] = useState("");
 
-  if (error) {
-    console.error(error.message);
-    return [];
-  }
-
-  let result = ((data || []) as unknown) as any[];
-
-  if (params?.type) {
-    result = result.filter(
-      (item: any) => item.type === params.type
-    );
-  }
-
-  if (params?.language) {
-    result = result.filter(
-      (item: any) =>
-        item.modules?.categories?.slug === params.language
-    );
-  }
-
-  return result.map((item: any) => {
-    const fileUrl = item.original_url || item.url;
-
-    return {
-      ...item,
-      file_url: fileUrl,
-      is_pdf: fileUrl?.toLowerCase().includes(".pdf"),
-      is_image: fileUrl?.match(/\.(jpg|jpeg|png|webp)$/i),
-    };
+  const [form, setForm] = useState({
+    title: "",
+    meeting_url: "",
+    scheduled_at: "",
   });
-}
 
-export async function getResourceById(id: string) {
-  const supabase = await createClient();
+  useEffect(() => {
+    if (!language) return;
 
-  const { data, error } = await supabase
-    .from("media_resources")
-    .select(`
-      *,
-      modules (
-        id,
-        categories (
-          slug,
-          name
-        )
-      )
-    `)
-    .eq("id", id)
-    .single();
+    async function loadModule() {
+      const { data } = await supabase
+        .from("modules")
+        .select("id, categories!inner(slug)")
+        .eq("categories.slug", language)
+        .limit(1);
 
-  if (error || !data) return null;
+      const modulesData = (data as unknown) as any[];
 
-  const item = data as any;
-  const fileUrl = item.original_url || item.url;
+      if (modulesData && modulesData.length > 0) {
+        setModuleId(modulesData[0].id);
+      }
+    }
 
-  return {
-    ...item,
-    file_url: fileUrl,
-    is_pdf: fileUrl?.toLowerCase().includes(".pdf"),
-    is_image: fileUrl?.match(/\.(jpg|jpeg|png|webp)$/i),
-  };
-}
+    loadModule();
+  }, [language]);
 
-export async function createResource(payload: {
-  title: string;
-  type: "article" | "book";
-  url?: string;
-  original_url?: string;
-  content?: string;
-  module_id: string;
-  thumbnail_url?: string;
-}) {
-  const supabase = await createClient();
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
 
-  const insertData = {
-    title: payload.title,
-    type: payload.type,
-    url: payload.url || "",
-    original_url: payload.original_url || payload.url || "",
-    content: payload.content || "",
-    module_id: payload.module_id,
-    thumbnail_url: payload.thumbnail_url || null,
-    created_at: new Date().toISOString(),
-  };
+    if (!form.title || !form.meeting_url || !form.scheduled_at || !moduleId) {
+      alert("يرجى ملء جميع الحقول");
+      return;
+    }
 
-  const { data, error } = await supabase
-    .from("media_resources")
-    .insert([insertData] as unknown as never[])
-    .select()
-    .single();
+    setLoading(true);
 
-  if (error) {
-    console.error(error.message);
-    throw new Error(error.message);
+    try {
+      const { error } = await supabase.from("meetings").insert([
+        {
+          title: form.title,
+          meeting_url: form.meeting_url,
+          scheduled_at: form.scheduled_at,
+          module_id: moduleId,
+          created_at: new Date().toISOString(),
+        },
+      ]);
+
+      if (error) throw error;
+
+      router.push("/Admin/meetings");
+    } catch (err) {
+      console.error(err);
+      alert("حدث خطأ");
+    }
+
+    setLoading(false);
   }
 
-  revalidate();
-  return data;
+  return (
+    <div className="max-w-3xl mx-auto py-12 px-6 space-y-8">
+
+      <h1 className="text-2xl font-bold text-center">
+        إضافة اجتماع جديد
+      </h1>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+
+        <input
+          type="text"
+          placeholder="عنوان الاجتماع"
+          value={form.title}
+          onChange={(e) =>
+            setForm({ ...form, title: e.target.value })
+          }
+          className="w-full border p-3 rounded-md"
+        />
+
+        <input
+          type="text"
+          placeholder="رابط Google Meet"
+          value={form.meeting_url}
+          onChange={(e) =>
+            setForm({ ...form, meeting_url: e.target.value })
+          }
+          className="w-full border p-3 rounded-md"
+        />
+
+        <input
+          type="datetime-local"
+          value={form.scheduled_at}
+          onChange={(e) =>
+            setForm({ ...form, scheduled_at: e.target.value })
+          }
+          className="w-full border p-3 rounded-md"
+        />
+
+        <div className="grid grid-cols-2 gap-4">
+          <SelectCard
+            active={language === "technical"}
+            label="اللغة التقنية"
+            onClick={() => setLanguage("technical")}
+          />
+          <SelectCard
+            active={language === "fusha"}
+            label="اللغة الفصيحة"
+            onClick={() => setLanguage("fusha")}
+          />
+        </div>
+
+        <button
+          type="submit"
+          disabled={loading}
+          className="w-full bg-sky-500 text-white py-3 rounded-md"
+        >
+          {loading ? "جارٍ الحفظ..." : "حفظ الاجتماع"}
+        </button>
+
+      </form>
+
+    </div>
+  );
 }
 
-export async function updateResource(
-  id: string,
-  payload: Partial<{
-    title: string;
-    content: string;
-    url: string;
-    original_url: string;
-    module_id: string;
-    thumbnail_url: string;
-  }>
-) {
-  const supabase = await createClient();
-
-  const updateData = {
-    ...payload,
-    original_url: payload.original_url || payload.url,
-  };
-
-  const { data, error } = await supabase
-    .from("media_resources")
-    .update(updateData as unknown as never)
-    .eq("id", id)
-    .select()
-    .single();
-
-  if (error) {
-    console.error(error.message);
-    throw new Error(error.message);
-  }
-
-  revalidate();
-  return data;
-}
-
-export async function deleteResource(id: string) {
-  const supabase = await createClient();
-
-  const { error } = await supabase
-    .from("media_resources")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error(error.message);
-    throw new Error(error.message);
-  }
-
-  revalidate();
-}
-
-function revalidate() {
-  revalidatePath("/resources");
-  revalidatePath("/Admin/resources");
+function SelectCard({ label, active, onClick }: any) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`p-4 rounded-lg border text-center transition ${
+        active
+          ? "bg-sky-500 text-white border-sky-500"
+          : "border-slate-200 text-slate-500 hover:bg-slate-50"
+      }`}
+    >
+      <span className="text-xs">{label}</span>
+    </button>
+  );
 }

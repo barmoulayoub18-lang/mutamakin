@@ -9,23 +9,34 @@ import {
 } from "lucide-react";
 
 export default function FushaLanguagePage() {
+
   return (
     <div className="min-h-screen bg-white">
 
-      {/* HEADER */}
       <section className="text-center py-16 border-b border-slate-100">
-        <div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-3">
-            اللغة الفصيحة
-          </h1>
+        <div className="flex flex-col items-center gap-6">
 
-          <p className="text-slate-500">
-            إنغمس في اللغة و مارسها الآن
-          </p>
+          <div className="w-full max-w-3xl h-56 rounded-2xl overflow-hidden shadow-sm">
+            <img
+              src="https://images.unsplash.com/photo-1524995997946-a1c2e315a42f?q=80&w=1200"
+              alt="fusha"
+              className="w-full h-full object-cover"
+            />
+          </div>
+
+          <div>
+            <h1 className="text-3xl font-bold text-slate-900 mb-3">
+              اللغة الفصيحة
+            </h1>
+
+            <p className="text-slate-500">
+              إنغمس في اللغة و مارسها الآن
+            </p>
+          </div>
+
         </div>
       </section>
 
-      {/* ACTIONS */}
       <section className="py-12 flex flex-col items-center gap-4">
         <Link
           href="/dashboard?type=fusha&plan=free"
@@ -42,7 +53,6 @@ export default function FushaLanguagePage() {
         </Link>
       </section>
 
-      {/* FEATURES */}
       <section className="py-16 border-t border-slate-100">
         <div className="max-w-5xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 px-6">
 
@@ -50,28 +60,32 @@ export default function FushaLanguagePage() {
             title="المكتبة السماعية"
             desc="استماع وتفاعل لغوي"
             icon={<PlayCircle />}
-            href="/media?type=fusha"
+            href={`/media?type=fusha`}
+            image="https://images.unsplash.com/photo-1492724441997-5dc865305da7?q=80&w=800"
           />
 
           <FeatureCard
             title="المقالات والكتب"
             desc="نصوص أدبية"
             icon={<BookOpen />}
-            href="/resources?type=fusha"
+            href={`/resources?type=fusha`}
+            image="https://images.unsplash.com/photo-1495446815901-a7297e633e8d?q=80&w=800"
           />
 
           <FeatureCard
             title="بنك التمارين"
             desc="تحسين المهارات"
             icon={<BrainCircuit />}
-            href="/exercises?type=fusha"
+            href={`/exercises?type=fusha`}
+            image="https://images.unsplash.com/photo-1454165804606-c3d57bc86b40?q=80&w=800"
           />
 
           <FeatureCard
             title="الاجتماعات"
             desc="جلسات مباشرة"
             icon={<Video />}
-            href="/meetings?type=fusha"
+            href={`/meetings?type=fusha`}
+            image="https://images.unsplash.com/photo-1588196749597-9ff075ee6b5b?q=80&w=800"
           />
 
         </div>
@@ -86,17 +100,23 @@ function FeatureCard({
   desc,
   icon,
   href,
+  image,
 }: {
   title: string;
   desc: string;
   icon: React.ReactNode;
   href: string;
+  image: string;
 }) {
   return (
     <Link
       href={href}
-      className="group border border-slate-100 rounded-lg p-6 text-center hover:bg-sky-50"
+      className="group border border-slate-100 rounded-lg p-6 text-center hover:bg-sky-50 transition"
     >
+      <div className="w-full h-32 rounded-lg overflow-hidden mb-4">
+        <img src={image} alt={title} className="w-full h-full object-cover" />
+      </div>
+
       <div className="w-12 h-12 mx-auto mb-4 flex items-center justify-center bg-white border border-slate-200 text-sky-600 rounded-lg">
         {icon}
       </div>

@@ -1,4 +1,5 @@
 import { getMedia } from "@/services/mediaService";
+import { getSpecializations } from "@/services/specializationService";
 import {
   PlayCircle,
   ChevronLeft,
@@ -13,21 +14,29 @@ export default async function MediaPage({
   searchParams: {
     type?: "technical" | "fusha";
     filter?: "video" | "podcast";
+    specialization?: string;
   };
 }) {
   const language = searchParams.type || "technical";
   const filter = searchParams.filter;
+  const specializationId = searchParams.specialization;
 
   const mediaItems = await getMedia({
     language,
     type: filter,
+    specializationId,
   });
+
+  const allSpecializations = await getSpecializations();
+
+  const specializations = (allSpecializations || []).filter(
+    (s: any) => s.categories?.slug === language
+  );
 
   return (
     <div className="min-h-screen bg-white text-slate-900 pb-20">
       <div className="max-w-6xl mx-auto px-6">
 
-        {/* HEADER */}
         <header className="py-12 border-b border-slate-100 mb-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
           <div>
             <h1 className="text-3xl font-bold">
@@ -39,27 +48,41 @@ export default async function MediaPage({
             </p>
           </div>
 
-          {/* FILTER */}
           <div className="flex gap-2 bg-slate-50 p-1 rounded-md border border-slate-100">
             <FilterLink
               label="الكل"
               active={!filter}
-              href={`/media?type=${language}`}
+              href={`/media?type=${language}${specializationId ? `&specialization=${specializationId}` : ""}`}
             />
             <FilterLink
               label="فيديو"
               active={filter === "video"}
-              href={`/media?type=${language}&filter=video`}
+              href={`/media?type=${language}&filter=video${specializationId ? `&specialization=${specializationId}` : ""}`}
             />
             <FilterLink
               label="بودكاست"
               active={filter === "podcast"}
-              href={`/media?type=${language}&filter=podcast`}
+              href={`/media?type=${language}&filter=podcast${specializationId ? `&specialization=${specializationId}` : ""}`}
             />
           </div>
         </header>
 
-        {/* CONTENT */}
+        <div className="flex flex-wrap gap-2 mb-8">
+          <FilterLink
+            label="كل التخصصات"
+            active={!specializationId}
+            href={`/media?type=${language}${filter ? `&filter=${filter}` : ""}`}
+          />
+          {specializations?.map((spec: any) => (
+            <FilterLink
+              key={spec.id}
+              label={spec.name}
+              active={specializationId === spec.id}
+              href={`/media?type=${language}${filter ? `&filter=${filter}` : ""}&specialization=${spec.id}`}
+            />
+          ))}
+        </div>
+
         {mediaItems.length > 0 ? (
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
             {mediaItems.map((item: any) => (
@@ -67,7 +90,6 @@ export default async function MediaPage({
                 key={item.id}
                 className="group border border-slate-100 rounded-xl overflow-hidden hover:shadow-sm transition"
               >
-                {/* IMAGE */}
                 <div className="aspect-video bg-slate-50 relative">
                   {item.thumbnail_url ? (
                     <img
@@ -82,7 +104,6 @@ export default async function MediaPage({
                   )}
                 </div>
 
-                {/* INFO */}
                 <div className="p-5 space-y-3">
                   <span className="text-[10px] text-sky-600 font-bold uppercase">
                     {item.modules?.categories?.name || "عام"}
@@ -104,7 +125,6 @@ export default async function MediaPage({
             ))}
           </div>
         ) : (
-          /* EMPTY */
           <div className="py-20 text-center border border-dashed border-slate-100 rounded-lg">
             <Search size={40} className="mx-auto text-slate-200 mb-3" />
             <p className="text-slate-400 text-sm">
@@ -113,7 +133,6 @@ export default async function MediaPage({
           </div>
         )}
 
-        {/* BACK */}
         <div className="mt-16 text-center">
           <Link
             href="/"
@@ -129,7 +148,6 @@ export default async function MediaPage({
   );
 }
 
-/* FILTER BUTTON */
 function FilterLink({
   label,
   active,

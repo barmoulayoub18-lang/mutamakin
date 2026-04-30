@@ -64,6 +64,10 @@ export default async function ResourcesPage({
               const pdf = item.type === "book" && isPdf(fileUrl);
               const image = isImage(fileUrl);
 
+              const showThumbnail =
+                item.thumbnail_url &&
+                (item.type === "book" || item.type === "article");
+
               return (
                 <div
                   key={item.id}
@@ -71,7 +75,7 @@ export default async function ResourcesPage({
                 >
                   <div className="h-48 bg-slate-100 relative">
 
-                    {item.thumbnail_url ? (
+                    {showThumbnail ? (
                       <img
                         src={item.thumbnail_url}
                         alt={item.title}
@@ -105,7 +109,6 @@ export default async function ResourcesPage({
 
                     <div className="mt-auto pt-4 border-t border-slate-100 flex justify-between items-center">
 
-                      {/* 🔥 فتح صحيح 100% */}
                       {pdf || image ? (
                         <a
                           href={fileUrl}

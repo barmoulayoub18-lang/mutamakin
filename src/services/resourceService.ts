@@ -9,7 +9,7 @@ export async function getResources(params?: {
 }) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("media_resources")
     .select(`
       *,
@@ -21,7 +21,14 @@ export async function getResources(params?: {
         )
       )
     `)
+    .in("type", ["article", "book"])
     .order("created_at", { ascending: false });
+
+  if (params?.type) {
+    query = query.eq("type", params.type);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error(error.message);
@@ -29,12 +36,6 @@ export async function getResources(params?: {
   }
 
   let result = ((data || []) as unknown) as any[];
-
-  if (params?.type) {
-    result = result.filter(
-      (item: any) => item.type === params.type
-    );
-  }
 
   if (params?.language) {
     result = result.filter(
@@ -71,6 +72,7 @@ export async function getResourceById(id: string) {
       )
     `)
     .eq("id", id)
+    .in("type", ["article", "book"])
     .single();
 
   if (error || !data) return null;

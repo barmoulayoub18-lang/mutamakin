@@ -29,14 +29,17 @@ export async function proxy(request: NextRequest) {
     }
   );
 
-  const { data: userData } = await supabase.auth.getUser();
-  const user = userData.user;
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const url = request.nextUrl.clone();
   const { pathname } = url;
 
   const isAuthPage = pathname === "/login" || pathname === "/register";
-  const isAdminPage = pathname.startsWith("/admin");
+
+  const isAdminPage =
+    pathname.startsWith("/admin") || pathname.startsWith("/Admin");
 
   const isProtectedContent =
     pathname.startsWith("/media") ||
@@ -44,28 +47,25 @@ export async function proxy(request: NextRequest) {
     pathname.startsWith("/exercises") ||
     pathname.startsWith("/meetings");
 
+  const isDashboard = pathname.startsWith("/dashboard");
+
   const isPublicPage = pathname === "/" || isAuthPage;
 
-  /* ===============================
-     🚫 1. غير مسجل → redirect
-  =============================== */
   if (!user && !isPublicPage) {
     url.pathname = "/login";
     url.searchParams.set("next", pathname);
     return NextResponse.redirect(url);
   }
 
-  /* ===============================
-     🔁 2. مسجل → منع login
-  =============================== */
   if (user && isAuthPage) {
     url.pathname = "/";
     return NextResponse.redirect(url);
   }
 
-  /* ===============================
-     👑 3. Admin check (FIX)
-  =============================== */
+  if (user && isDashboard) {
+    return response;
+  }
+
   if (user && isAdminPage) {
     const { data: profile } = await supabase
       .from("profiles")
@@ -81,9 +81,6 @@ export async function proxy(request: NextRequest) {
     }
   }
 
-  /* ===============================
-     💳 4. Subscription check (FIX)
-  =============================== */
   if (user && isProtectedContent) {
     const { data: subscriptions } = await supabase
       .from("subscriptions")

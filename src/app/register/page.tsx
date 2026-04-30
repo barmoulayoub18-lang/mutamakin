@@ -29,30 +29,41 @@ export default function RegisterPage() {
     setLoading(true);
     setError(null);
 
-    const { error } = await supabase.auth.signUp({
+    const { error: signUpError } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        emailRedirectTo: undefined,
         data: {
           full_name: fullName,
         },
       },
     });
 
-    if (error) {
+    if (signUpError) {
       setError("فشل إنشاء الحساب");
       setLoading(false);
       return;
     }
 
-    router.push("/login");
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError("تم إنشاء الحساب لكن فشل تسجيل الدخول");
+      setLoading(false);
+      return;
+    }
+
+    router.push("/");
   }
 
   return (
     <div className="min-h-screen bg-white flex items-center justify-center px-6">
       <div className="w-full max-w-md border border-slate-100 rounded-xl p-8 space-y-6">
 
-        {/* TITLE */}
         <div className="text-center">
           <h1 className="text-2xl font-bold">إنشاء حساب</h1>
           <p className="text-sm text-slate-500 mt-2">
@@ -60,14 +71,12 @@ export default function RegisterPage() {
           </p>
         </div>
 
-        {/* ERROR */}
         {error && (
           <div className="text-sm text-red-500 text-center">
             {error}
           </div>
         )}
 
-        {/* FORM */}
         <form onSubmit={handleRegister} className="space-y-4">
 
           <div className="relative">
@@ -123,7 +132,6 @@ export default function RegisterPage() {
 
         </form>
 
-        {/* LOGIN */}
         <p className="text-xs text-center text-slate-400">
           لديك حساب؟{" "}
           <Link href="/login" className="text-sky-600">

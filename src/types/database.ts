@@ -72,10 +72,43 @@ export interface Database {
         Relationships: [];
       };
 
+      specializations: {
+        Row: {
+          id: string;
+          name: string;
+          slug: string;
+          category_id: string | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          slug: string;
+          category_id?: string | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          slug?: string;
+          category_id?: string | null;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "specializations_category_id_fkey";
+            columns: ["category_id"];
+            referencedRelation: "categories";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
       modules: {
         Row: {
           id: string;
           category_id: string | null;
+          specialization_id: string | null;
           title: string;
           description: string | null;
           is_free: boolean;
@@ -89,6 +122,7 @@ export interface Database {
         Insert: {
           id?: string;
           category_id?: string | null;
+          specialization_id?: string | null;
           title: string;
           description?: string | null;
           is_free?: boolean;
@@ -98,6 +132,7 @@ export interface Database {
         Update: {
           id?: string;
           category_id?: string | null;
+          specialization_id?: string | null;
           title?: string;
           description?: string | null;
           is_free?: boolean;
@@ -110,6 +145,12 @@ export interface Database {
             columns: ["category_id"];
             referencedRelation: "categories";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "modules_specialization_id_fkey";
+            columns: ["specialization_id"];
+            referencedRelation: "specializations";
+            referencedColumns: ["id"];
           }
         ];
       };
@@ -118,6 +159,7 @@ export interface Database {
         Row: {
           id: string;
           module_id: string | null;
+          specialization_id: string | null;
           title: string;
           type: "video" | "podcast" | "article" | "book";
           url: string;
@@ -136,6 +178,7 @@ export interface Database {
         Insert: {
           id?: string;
           module_id?: string | null;
+          specialization_id?: string | null;
           title: string;
           type: "video" | "podcast" | "article" | "book";
           url: string;
@@ -148,6 +191,7 @@ export interface Database {
         Update: {
           id?: string;
           module_id?: string | null;
+          specialization_id?: string | null;
           title?: string;
           type?: "video" | "podcast" | "article" | "book";
           url?: string;
@@ -163,6 +207,44 @@ export interface Database {
             columns: ["module_id"];
             referencedRelation: "modules";
             referencedColumns: ["id"];
+          },
+          {
+            foreignKeyName: "media_resources_specialization_id_fkey";
+            columns: ["specialization_id"];
+            referencedRelation: "specializations";
+            referencedColumns: ["id"];
+          }
+        ];
+      };
+
+      reviews: {
+        Row: {
+          id: string;
+          user_id: string | null;
+          content: string;
+          rating: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id?: string | null;
+          content: string;
+          rating: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          user_id?: string | null;
+          content?: string;
+          rating?: number;
+          created_at?: string;
+        };
+        Relationships: [
+          {
+            foreignKeyName: "reviews_user_id_fkey";
+            columns: ["user_id"];
+            referencedRelation: "users";
+            referencedColumns: ["id"];
           }
         ];
       };
@@ -175,12 +257,6 @@ export interface Database {
           xp_reward: number;
           passing_score: number;
           created_at: string;
-          modules?: {
-            categories?: {
-              slug: string;
-              name: string;
-            } | null;
-          } | null;
         };
         Insert: {
           id?: string;
@@ -198,14 +274,7 @@ export interface Database {
           passing_score?: number;
           created_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "exercises_module_id_fkey";
-            columns: ["module_id"];
-            referencedRelation: "modules";
-            referencedColumns: ["id"];
-          }
-        ];
+        Relationships: [];
       };
 
       questions: {
@@ -233,14 +302,7 @@ export interface Database {
           correct_answer?: string;
           created_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "questions_exercise_id_fkey";
-            columns: ["exercise_id"];
-            referencedRelation: "exercises";
-            referencedColumns: ["id"];
-          }
-        ];
+        Relationships: [];
       };
 
       exercise_submissions: {
@@ -271,20 +333,7 @@ export interface Database {
           xp_earned?: number;
           created_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "exercise_submissions_exercise_id_fkey";
-            columns: ["exercise_id"];
-            referencedRelation: "exercises";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "exercise_submissions_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
+        Relationships: [];
       };
 
       meetings: {
@@ -295,12 +344,6 @@ export interface Database {
           meeting_url: string;
           scheduled_at: string;
           created_at: string;
-          modules?: {
-            categories?: {
-              slug: string;
-              name: string;
-            } | null;
-          } | null;
         };
         Insert: {
           id?: string;
@@ -318,14 +361,7 @@ export interface Database {
           scheduled_at?: string;
           created_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "meetings_module_id_fkey";
-            columns: ["module_id"];
-            referencedRelation: "modules";
-            referencedColumns: ["id"];
-          }
-        ];
+        Relationships: [];
       };
 
       subscriptions: {
@@ -350,20 +386,7 @@ export interface Database {
           status?: string;
           created_at?: string;
         };
-        Relationships: [
-          {
-            foreignKeyName: "subscriptions_module_id_fkey";
-            columns: ["module_id"];
-            referencedRelation: "modules";
-            referencedColumns: ["id"];
-          },
-          {
-            foreignKeyName: "subscriptions_user_id_fkey";
-            columns: ["user_id"];
-            referencedRelation: "users";
-            referencedColumns: ["id"];
-          }
-        ];
+        Relationships: [];
       };
     };
     Views: {};

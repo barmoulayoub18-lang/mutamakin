@@ -17,6 +17,8 @@ export default function NewMediaPage() {
 
   const [language, setLanguage] = useState("");
   const [moduleId, setModuleId] = useState("");
+  const [specializations, setSpecializations] = useState<any[]>([]);
+  const [specializationId, setSpecializationId] = useState("");
 
   const [form, setForm] = useState({
     title: "",
@@ -41,7 +43,22 @@ export default function NewMediaPage() {
       }
     }
 
+    async function loadSpecializations() {
+      const { data } = await supabase
+        .from("specializations")
+        .select(`
+          *,
+          categories!inner(slug)
+        `)
+        .eq("categories.slug", language)
+        .order("created_at", { ascending: true });
+
+      setSpecializations((data as unknown) as any[]);
+      setSpecializationId("");
+    }
+
     loadModule();
+    loadSpecializations();
   }, [language]);
 
   async function uploadFile(file: File) {
@@ -72,6 +89,11 @@ export default function NewMediaPage() {
       return;
     }
 
+    if (specializations.length > 0 && !specializationId) {
+      alert("يرجى اختيار التخصص");
+      return;
+    }
+
     setLoading(true);
 
     try {
@@ -99,6 +121,7 @@ export default function NewMediaPage() {
         module_id: moduleId,
         source_type: form.source_type as any,
         thumbnail_url: thumbnailUrl,
+        specialization_id: specializationId || undefined,
       });
 
       router.push("/Admin/media");
@@ -141,6 +164,21 @@ export default function NewMediaPage() {
             onClick={() => setLanguage("fusha")}
           />
         </div>
+
+        {specializations.length > 0 && (
+          <select
+            value={specializationId}
+            onChange={(e) => setSpecializationId(e.target.value)}
+            className="w-full border p-3 rounded-md"
+          >
+            <option value="">اختر التخصص</option>
+            {specializations.map((spec: any) => (
+              <option key={spec.id} value={spec.id}>
+                {spec.name}
+              </option>
+            ))}
+          </select>
+        )}
 
         <div className="grid grid-cols-2 gap-4">
           <SelectCard

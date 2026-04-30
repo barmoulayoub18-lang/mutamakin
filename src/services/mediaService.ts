@@ -7,10 +7,11 @@ export async function getMedia(params?: {
   language?: string;
   type?: string;
   module_id?: string;
+  specializationId?: string;
 }) {
   const supabase = await createClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("media_resources")
     .select(`
       *,
@@ -22,7 +23,22 @@ export async function getMedia(params?: {
         )
       )
     `)
+    .in("type", ["video", "podcast"])
     .order("created_at", { ascending: false });
+
+  if (params?.type) {
+    query = query.eq("type", params.type);
+  }
+
+  if (params?.module_id) {
+    query = query.eq("module_id", params.module_id);
+  }
+
+  if (params?.specializationId) {
+    query = query.eq("specialization_id", params.specializationId);
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error(error.message);
@@ -30,16 +46,6 @@ export async function getMedia(params?: {
   }
 
   let result = ((data || []) as unknown) as any[];
-
-  if (params?.type) {
-    result = result.filter((item) => item.type === params.type);
-  }
-
-  if (params?.module_id) {
-    result = result.filter(
-      (item) => item.module_id === params.module_id
-    );
-  }
 
   if (params?.language) {
     result = result.filter(
@@ -67,6 +73,7 @@ export async function getMediaById(id: string) {
       )
     `)
     .eq("id", id)
+    .in("type", ["video", "podcast"])
     .single();
 
   if (error || !data) return null;
@@ -90,6 +97,7 @@ export async function createMedia(payload: {
   module_id?: string;
   thumbnail_url?: string;
   source_type?: "upload" | "youtube";
+  specialization_id?: string;
 }) {
   const supabase = await createClient();
 
@@ -100,6 +108,7 @@ export async function createMedia(payload: {
     module_id: payload.module_id || null,
     thumbnail_url: payload.thumbnail_url || null,
     source_type: payload.source_type || "upload",
+    specialization_id: payload.specialization_id || null,
     created_at: new Date().toISOString(),
   };
 
@@ -127,6 +136,7 @@ export async function updateMedia(
     thumbnail_url: string;
     source_type: string;
     module_id: string;
+    specialization_id: string;
   }>
 ) {
   const supabase = await createClient();
